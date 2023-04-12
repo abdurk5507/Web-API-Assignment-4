@@ -1,8 +1,11 @@
 /*
-CSC3916 HW4
+CSC3916 HW3
 File: Server.js
 Description: Web API scaffolding for Movie API
  */
+
+//Include .env file
+require('dotenv').config();
 
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -13,7 +16,6 @@ var jwt = require('jsonwebtoken');
 var cors = require('cors');
 var User = require('./Users');
 var Movie = require('./Movies');
-var Review = require('./Reviews');
 
 var app = express();
 app.use(cors());
@@ -86,6 +88,221 @@ router.post('/signin', function (req, res) {
         })
     })
 });
+
+router.route('/movies')
+    .get(authJwtController.isAuthenticated,(req, res) => {
+        Movie.find({}, (err, movies) => {
+        if (err) {
+            res.status(500).json({
+            status: 500,
+            message: 'Error retrieving movies from database'
+            });
+        } else {
+            res.status(200).json({
+            status: 200,
+            message: 'GET movies',
+            headers: req.headers,
+            query: req.query,
+            env: process.env.DB,
+            data: movies,
+            });
+        }
+        });
+    })
+    .post(authJwtController.isAuthenticated, (req, res) => {
+        // Check if all required fields are present in the request body
+        if (!req.body.title || !req.body.releaseDate || !req.body.genre || !req.body.actors || req.body.actors.length !== 3) {
+            res.status(400).json({success: false, msg: 'Please include title, releaseDate, genre, and three actors in request body.'})
+        } else {
+            // Create a new movie object with the provided fields
+            const newMovie = new Movie({
+                title: req.body.title,
+                releaseDate: req.body.releaseDate,
+                genre: req.body.genre,
+                actors: [
+                    {
+                        actorName: req.body.actors[0].actorName,
+                        characterName: req.body.actors[0].characterName,
+                    },
+                    {
+                        actorName: req.body.actors[1].actorName,
+                        characterName: req.body.actors[1].characterName,
+                    },
+                    {
+                        actorName: req.body.actors[2].actorName,
+                        characterName: req.body.actors[2].characterName,
+                    },
+                ],
+            });
+    
+            // Save the new movie to the database
+            newMovie.save((err, savedMovie) => {
+                if (err) {
+                    res.status(500).json({success: false, msg: 'Failed to save movie to database.'});
+                } else {
+                    // Send a response with the saved movie data
+                    res.status(200).json({
+                        status: 200,
+                        message: 'movie saved',
+                        headers: req.headers,
+                        query: req.query,
+                        env: process.env.DB,
+                        data: savedMovie.toObject,
+                    });
+                }
+            });
+        }
+    })
+    
+    
+    .put(authJwtController.isAuthenticated, (req, res) => {
+        const {title } = req.params;
+        const updatedMovie = req.body;
+        //Movie.findOneAndUpdate({ 'title': title }, updatedMovie, { new: true }, (err, movies) => {
+        Movie.findOneAndUpdate({ title: { $regex: new RegExp(title, "i") } }, updatedMovie, { new: true }, (err, movies) => {          
+          //console.log('movies:', movies);
+          if (err) {
+            res.status(500).json({
+              status: 500,
+              message: 'Error updating movie in database'
+            });
+          } else if (!movies) {
+            res.status(404).json({
+              status: 404,
+              message: 'Movie not found'
+            });
+          } else {
+            res.status(200).json({
+              status: 200,
+              message: 'Movie updated',
+              headers: req.headers,
+              query: req.query,
+              env: process.env.DB,
+              data: movies,
+            });
+            //console.log('updatedMovie: ', updatedMovie);
+          }
+        });
+      })
+      
+      .delete(authJwtController.isAuthenticated, (req, res) => {
+        const { title } = req.params;
+        Movie.findOneAndDelete({ 'title': title }, (err, movies) => {
+          if (err) {
+            res.status(500).json({
+              status: 500,
+              message: 'Error deleting movie from database'
+            });
+          } else if (!movies) {
+            res.status(404).json({
+              status: 404,
+              message: 'Movie not found'
+            });
+          } else {
+            res.status(200).json({
+              status: 200,
+              message: 'Movie deleted',
+              headers: req.headers,
+              query: req.query,
+              env: process.env.DB,
+              data: movies,
+            });
+          }
+        });
+      })
+
+      router.route('/reviews')
+      .get(authJwtController.isAuthenticated, (req, res) => {
+          if (req.query.reviews === 'true') {
+              DB.movies.aggregate([
+                  {
+                      $lookup: {
+                          from: 'reviews',
+                          localField: '_id',
+                          foreignField: 'movieId',
+                          as: 'reviews'
+                      }
+                  },
+                  {
+                      $addFields: {
+                          average_rating: { $avg: '$reviews.rating' }
+                      }
+                  },
+                  {
+                      $ifNull: { reviews: [] }
+                  },
+                  {
+                      $sort: { average_rating: -1 }
+                  }
+              ]).exec((err, movies) => {
+                  if (err) {
+                      res.status(500).json({
+                          status: 500,
+                          message: 'Error retrieving movies with reviews from database'
+                      });
+                  } else {
+                      res.status(200).json({
+                          status: 200,
+                          message: 'GET movies with reviews',
+                          headers: req.headers,
+                          query: req.query,
+                          env: process.env.DB,
+                          data: movies,
+                      });
+                  }
+              });
+          } else {
+              Review.find({}, (err, reviews) => {
+                  if (err) {
+                      res.status(500).json({
+                          status: 500,
+                          message: 'Error retrieving reviews from database'
+                      });
+                  } else {
+                      res.status(200).json({
+                          status: 200,
+                          message: 'GET reviews',
+                          headers: req.headers,
+                          query: req.query,
+                          env: process.env.DB,
+                          data: reviews,
+                      });
+                  }
+              });
+          }
+      })  
+    .post(authJwtController.isAuthenticated, (req, res) => {
+        // Check if all required fields are present in the request body
+        if (!req.body.movieId || !req.body.review || !req.body.rating) {
+            res.status(400).json({success: false, msg: 'Please include movieId, review, and rating in request body.'})
+        } else {
+            // Create a new review object with the provided fields
+            const newReview = new Review({
+                movie_id: req.body.movieId,
+                name: req.user.username,
+                review: req.body.review,
+                rating: req.body.rating
+            });
+    
+            // Save the new review to the database
+            newReview.save((err, savedReview) => {
+                if (err) {
+                    res.status(500).json({success: false, msg: 'Failed to save review to database.'});
+                } else {
+                    // Send a response with the saved review data
+                    res.status(200).json({
+                        status: 200,
+                        message: 'Review created!',
+                        headers: req.headers,
+                        query: req.query,
+                        env: process.env.DB,
+                        data: savedReview.toObject(),
+                    });
+                }
+            });
+        }
+    });
+
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
