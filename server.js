@@ -113,9 +113,7 @@ router.route('/movies')
                     $sort: { average_rating: -1 }
                 }
             ]).exec((err, movies) => {
-                console.log(err)
-                var stack = new Error().stack
-                console.log(stack)
+                
                 if (err) {
                     res.status(500).json({
                         status: 500,
@@ -258,6 +256,9 @@ router.route('/movies')
 router.route('/reviews')
     .get(authJwtController.isAuthenticated,(req, res) => {
         Review.find({}, (err, reviews) => {
+        console.log(err)
+        var stack = new Error().stack
+        console.log(stack)
         if (err) {
             res.status(500).json({
             status: 500,
@@ -290,6 +291,9 @@ router.route('/reviews')
     
             // Save the new review to the database
             newReview.save((err, savedReview) => {
+                console.log(err)
+                var stack = new Error().stack
+                console.log(stack)
                 if (err) {
                     res.status(500).json({success: false, msg: 'Failed to save review to database.'});
                 } else {
