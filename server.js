@@ -277,32 +277,42 @@ router.route('/reviews')
         if (!req.body.movieId || !req.body.review || !req.body.rating) {
             res.status(400).json({success: false, msg: 'Please include movieId, review, and rating in request body.'})
         } else {
-            // Create a new review object with the provided fields
-            const newReview = new Review({
-                movie_id: req.body.movieId,
-                name: req.user.username,
-                review: req.body.review,
-                rating: req.body.rating
-            });
-    
-            // Save the new review to the database
-            newReview.save((err, savedReview) => {
+            // Check if the movie exists in the database
+            Movie.findById(req.body.movieId, (err, movie) => {
                 if (err) {
-                    res.status(500).json({success: false, msg: 'Failed to save review to database.'});
+                    res.status(500).json({success: false, msg: 'Failed to find movie in database.'})
+                } else if (!movie) {
+                    res.status(404).json({success: false, msg: 'Movie not found in database.'})
                 } else {
-                    // Send a response with the saved review data
-                    res.status(200).json({
-                        status: 200,
-                        message: 'Review created!',
-                        headers: req.headers,
-                        query: req.query,
-                        env: process.env.DB,
-                        data: savedReview.toObject(),
+                    // Create a new review object with the provided fields
+                    const newReview = new Review({
+                        movie_id: req.body.movieId,
+                        name: req.user.username,
+                        review: req.body.review,
+                        rating: req.body.rating
+                    });
+            
+                    // Save the new review to the database
+                    newReview.save((err, savedReview) => {
+                        if (err) {
+                            res.status(500).json({success: false, msg: 'Failed to save review to database.'});
+                        } else {
+                            // Send a response with the saved review data
+                            res.status(200).json({
+                                status: 200,
+                                message: 'Review created!',
+                                headers: req.headers,
+                                query: req.query,
+                                env: process.env.DB,
+                                data: savedReview.toObject(),
+                            });
+                        }
                     });
                 }
             });
         }
     });
+    
 
 
 app.use('/', router);
