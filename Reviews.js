@@ -6,7 +6,7 @@ mongoose.connect(process.env.DB);
 // Movie schema
 var ReviewSchema = new Schema({
     movie_id: {
-        type:mongoose.type.ObjectId, 
+        type:mongoose.Schema.Types.ObjectId, 
         required: true
     },
     name: {
