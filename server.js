@@ -95,25 +95,24 @@ router.route('/movies')
         if (req.query.reviews === 'true') {
             Movie.aggregate([
                 {
-                    $lookup: {
-                        from: 'reviews',
-                        localField: '_id',
-                        foreignField: 'movieId',
-                        as: 'reviews'
-                    }
+                  $lookup: {
+                    from: "reviews",
+                    localField: "_id",
+                    foreignField: "movieId",
+                    as: "reviews",
+                  },
                 },
                 {
-                    $addFields: {
-                        average_rating: { $avg: '$reviews.rating' }
-                    }
+                  $addFields: {
+                    average_rating: { $avg: "$reviews.rating" },
+                    reviews: { $ifNull: ["$reviews", []] },
+                  },
                 },
                 {
-                    $ifNull: { reviews: [] }
+                  $sort: { average_rating: -1 },
                 },
-                {
-                    $sort: { average_rating: -1 }
-                }
-            ]).exec((err, movies) => {
+              ])
+              .exec((err, movies) => {
                 console.log(err)
                 if (err) {
                     res.status(500).json({
@@ -319,3 +318,26 @@ app.listen(process.env.PORT || 8080);
 module.exports = app; // for testing only
 
 
+/*
+Movie.aggregate([
+                {
+                    $lookup: {
+                        from: 'reviews',
+                        localField: '_id',
+                        foreignField: 'movieId',
+                        as: 'reviews'
+                    }
+                },
+                {
+                    $addFields: {
+                        average_rating: { $avg: '$reviews.rating' }
+                    }
+                },
+                {
+                    $ifNull: { reviews: [] }
+                },
+                {
+                    $sort: { average_rating: -1 }
+                }
+            ])
+            */
