@@ -90,25 +90,66 @@ router.post('/signin', function (req, res) {
 });
 
 router.route('/movies')
-    .get(authJwtController.isAuthenticated,(req, res) => {
-        Movie.find({}, (err, movies) => {
-        if (err) {
-            res.status(500).json({
-            status: 500,
-            message: 'Error retrieving movies from database'
+    .get(authJwtController.isAuthenticated, (req, res) => {
+        if (req.query.reviews === 'true') {
+            DB.movies.aggregate([
+                {
+                    $lookup: {
+                        from: 'reviews',
+                        localField: '_id',
+                        foreignField: 'movieId',
+                        as: 'reviews'
+                    }
+                },
+                {
+                    $addFields: {
+                        average_rating: { $avg: '$reviews.rating' }
+                    }
+                },
+                {
+                    $ifNull: { reviews: [] }
+                },
+                {
+                    $sort: { average_rating: -1 }
+                }
+            ]).exec((err, movies) => {
+                if (err) {
+                    res.status(500).json({
+                        status: 500,
+                        message: 'Error retrieving movies with reviews from database'
+                    });
+                } else {
+                    res.status(200).json({
+                        status: 200,
+                        message: 'GET movies with reviews',
+                        headers: req.headers,
+                        query: req.query,
+                        env: process.env.DB,
+                        data: movies,
+                    });
+                }
             });
         } else {
-            res.status(200).json({
-            status: 200,
-            message: 'GET movies',
-            headers: req.headers,
-            query: req.query,
-            env: process.env.DB,
-            data: movies,
+            Movie.find({}, (err, reviews) => {
+                if (err) {
+                    res.status(500).json({
+                        status: 500,
+                        message: 'Error retrieving reviews from database'
+                    });
+                } else {
+                    res.status(200).json({
+                        status: 200,
+                        message: 'GET reviews',
+                        headers: req.headers,
+                        query: req.query,
+                        env: process.env.DB,
+                        data: reviews,
+                    });
+                }
             });
         }
-        });
-    })
+    })  
+
     .post(authJwtController.isAuthenticated, (req, res) => {
         // Check if all required fields are present in the request body
         if (!req.body.title || !req.body.releaseDate || !req.body.genre || !req.body.actors || req.body.actors.length !== 3) {
@@ -211,66 +252,26 @@ router.route('/movies')
         });
       })
 
-      router.route('/reviews')
-      .get(authJwtController.isAuthenticated, (req, res) => {
-          if (req.query.reviews === 'true') {
-              DB.movies.aggregate([
-                  {
-                      $lookup: {
-                          from: 'reviews',
-                          localField: '_id',
-                          foreignField: 'movieId',
-                          as: 'reviews'
-                      }
-                  },
-                  {
-                      $addFields: {
-                          average_rating: { $avg: '$reviews.rating' }
-                      }
-                  },
-                  {
-                      $ifNull: { reviews: [] }
-                  },
-                  {
-                      $sort: { average_rating: -1 }
-                  }
-              ]).exec((err, movies) => {
-                  if (err) {
-                      res.status(500).json({
-                          status: 500,
-                          message: 'Error retrieving movies with reviews from database'
-                      });
-                  } else {
-                      res.status(200).json({
-                          status: 200,
-                          message: 'GET movies with reviews',
-                          headers: req.headers,
-                          query: req.query,
-                          env: process.env.DB,
-                          data: movies,
-                      });
-                  }
-              });
-          } else {
-              Review.find({}, (err, reviews) => {
-                  if (err) {
-                      res.status(500).json({
-                          status: 500,
-                          message: 'Error retrieving reviews from database'
-                      });
-                  } else {
-                      res.status(200).json({
-                          status: 200,
-                          message: 'GET reviews',
-                          headers: req.headers,
-                          query: req.query,
-                          env: process.env.DB,
-                          data: reviews,
-                      });
-                  }
-              });
-          }
-      })  
+router.route('/reviews')
+    .get(authJwtController.isAuthenticated,(req, res) => {
+        Review.find({}, (err, reviews) => {
+        if (err) {
+            res.status(500).json({
+            status: 500,
+            message: 'Error retrieving movies from database'
+            });
+        } else {
+            res.status(200).json({
+            status: 200,
+            message: 'GET reviews',
+            headers: req.headers,
+            query: req.query,
+            env: process.env.DB,
+            data: reviews,
+            });
+        }
+        });
+    }) 
     .post(authJwtController.isAuthenticated, (req, res) => {
         // Check if all required fields are present in the request body
         if (!req.body.movieId || !req.body.review || !req.body.rating) {
