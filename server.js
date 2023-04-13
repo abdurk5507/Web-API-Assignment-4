@@ -114,7 +114,7 @@ router.route('/movies')
                     $sort: { average_rating: -1 }
                 }
             ]).exec((err, movies) => {
-                
+                console.log(err)
                 if (err) {
                     res.status(500).json({
                         status: 500,
@@ -133,6 +133,7 @@ router.route('/movies')
             });
         } else {
             Movie.find({}, (err, reviews) => {
+                console.log(err)
                 if (err) {
                     res.status(500).json({
                         status: 500,
