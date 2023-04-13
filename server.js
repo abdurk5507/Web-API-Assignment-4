@@ -113,6 +113,9 @@ router.route('/movies')
                     $sort: { average_rating: -1 }
                 }
             ]).exec((err, movies) => {
+                console.log(err)
+                var stack = new Error().stack
+                console.log(stack)
                 if (err) {
                     res.status(500).json({
                         status: 500,
