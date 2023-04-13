@@ -93,7 +93,7 @@ router.post('/signin', function (req, res) {
 router.route('/movies')
     .get(authJwtController.isAuthenticated, (req, res) => {
         if (req.query.reviews === 'true') {
-            movies.aggregate([
+            Movie.aggregate([
                 {
                     $lookup: {
                         from: 'reviews',
