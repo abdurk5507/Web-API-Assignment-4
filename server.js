@@ -95,41 +95,34 @@ router.route('/movies')
         if (req.query.reviews === 'true') {
             Movie.aggregate([
                 {
-                  $lookup: {
-                    from: "reviews",
-                    localField: "_id",
-                    foreignField: "movieId",
-                    as: "reviews",
-                  },
+                    $lookup: {
+                        from: 'reviews',
+                        localField: '_id',
+                        foreignField: 'movieId',
+                        as: 'reviews'
+                    }
                 },
                 {
-                  $addFields: {
-                    average_rating: { $avg: "$reviews.rating" },
-                    reviews: { $ifNull: ["$reviews", []] },
-                  },
+                    $addFields: {
+                        average_rating: { $avg: '$reviews.rating' }
+                    }
                 },
                 {
-                  $sort: { average_rating: -1 },
+                    $sort: { average_rating: -1 }
                 },
-              ])
-              .exec((err, movies) => {
-                console.log(err)
-                if (err) {
-                    res.status(500).json({
-                        status: 500,
-                        message: 'Error retrieving movies with reviews from database'
-                    });
-                } else {
-                    res.status(200).json({
-                        status: 200,
-                        message: 'GET movies with reviews',
-                        headers: req.headers,
-                        query: req.query,
-                        env: process.env.DB,
-                        data: movies,
-                    });
+                {
+                    $project: {
+                        reviews: {
+                            $cond: {
+                                if: { $gt: [ { $size: "$reviews" }, 0 ] },
+                                then: "$reviews",
+                                else: []
+                            }
+                        }
+                    }
                 }
-            });
+            ])
+            ;
         } else {
             Movie.find({}, (err, reviews) => {
                 console.log(err)
