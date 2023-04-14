@@ -17,6 +17,7 @@ var cors = require('cors');
 var User = require('./Users');
 var Movie = require('./Movies');
 var Review = require('./Reviews')
+var mongoose = require('mongoose'); //for /movies/:id route
 
 var app = express();
 app.use(cors());
