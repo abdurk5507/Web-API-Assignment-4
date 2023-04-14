@@ -93,6 +93,7 @@ router.post('/signin', function (req, res) {
 router.route('/movies')
     .get(authJwtController.isAuthenticated, (req, res) => {
         if (req.query.reviews === 'true') {
+            //Perform left outer join on between movies and reviews if true
             Movie.aggregate([
                 {
                   $lookup: {
@@ -129,7 +130,7 @@ router.route('/movies')
                     });
                 }
             });
-        } else {
+        } else {//Do what we did in HW3
             Movie.find({}, (err, reviews) => {
                 console.log(err)
                 if (err) {
@@ -278,38 +279,48 @@ router.route('/reviews')
     }) 
     .post(authJwtController.isAuthenticated, (req, res) => {
         // Check if all required fields are present in the request body
-        if (!req.body.movieId || !req.body.review || !req.body.rating) {
-            res.status(400).json({success: false, msg: 'Please include movieId, review, and rating in request body.'})
+        if (!req.body.movieId || !req.body.review || !req.body.rating || !req.body.name) {
+            res.status(400).json({success: false, msg: 'Please include movieId, review, rating, and name in request body.'})
         } else {
-            // Create a new review object with the provided fields
-            const newReview = new Review({
-                movie_id: req.body.movieId,
-                name: req.user.username,
-                review: req.body.review,
-                rating: req.body.rating
-            });
-    
-            // Save the new review to the database
-            newReview.save((err, savedReview) => {
-                console.log(err)
-                var stack = new Error().stack
-                console.log(stack)
+            // Check if the movie with the specified ID exists in the database
+            Movie.findById(req.body.movieId, (err, movie) => {
                 if (err) {
-                    res.status(500).json({success: false, msg: 'Failed to save review to database.'});
+                    res.status(500).json({success: false, msg: 'Failed to retrieve movie from database.'})
+                } else if (!movie) {
+                    res.status(404).json({success: false, msg: 'Movie not found in database.'})
                 } else {
-                    // Send a response with the saved review data
-                    res.status(200).json({
-                        status: 200,
-                        message: 'Review created!',
-                        headers: req.headers,
-                        query: req.query,
-                        env: process.env.DB,
-                        data: savedReview.toObject(),
+                    // Create a new review object with the provided fields
+                    const newReview = new Review({
+                        movie_id: req.body.movieId,
+                        name: req.body.name,
+                        review: req.body.review,
+                        rating: req.body.rating
+                    });
+    
+                    // Save the new review to the database
+                    newReview.save((err, savedReview) => {
+                        console.log(err)
+                        var stack = new Error().stack
+                        console.log(stack)
+                        if (err) {
+                            res.status(500).json({success: false, msg: 'Failed to save review to database.'});
+                        } else {
+                            // Send a response with the saved review data
+                            res.status(200).json({
+                                status: 200,
+                                message: 'Review created!',
+                                headers: req.headers,
+                                query: req.query,
+                                env: process.env.DB,
+                                data: savedReview.toObject(),
+                            });
+                        }
                     });
                 }
             });
         }
     });
+    
 
 
 app.use('/', router);
