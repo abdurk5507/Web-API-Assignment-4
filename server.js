@@ -254,6 +254,81 @@ router.route('/movies')
         });
       })
 
+router.route('/movies/:id')
+    .get(authJwtController.isAuthenticated, (req, res) => {
+        // Check if the reviews query parameter is set to true
+        if (req.query.reviews === 'true') {
+            // Find the movie with the specified id and its associated reviews
+            Movie.aggregate([
+                {
+                    $match: {
+                        _id: mongoose.Types.ObjectId(req.params.id)
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'reviews',
+                        localField: '_id',
+                        foreignField: 'movie_id',
+                        as: 'reviews'
+                    }
+                },
+                {
+                    $addFields: {
+                        average_rating: { $avg: '$reviews.rating' }
+                    }
+                }
+            ], (err, result) => {
+                console.log("Aggregate error:", err)
+                if (err) {
+                    res.status(500).json({
+                        status: 500,
+                        message: 'Error retrieving movie and reviews from database'
+                    });
+                } else if (result.length === 0) {
+                    res.status(404).json({
+                        status: 404,
+                        message: 'Movie not found'
+                    });
+                } else {
+                    res.status(200).json({
+                        status: 200,
+                        message: 'GET movie and reviews by id',
+                        headers: req.headers,
+                        query: req.query,
+                        env: process.env.DB,
+                        data: result[0],
+                    });
+                }
+            });
+        } else {
+            // Use the original route to get the movie by id without reviews
+            Movie.findById(req.params.id, (err, movie) => {
+                console.log(err)
+                if ("findById error msg:", err) {
+                    res.status(500).json({
+                        status: 500,
+                        message: 'Error retrieving movie from database'
+                    });
+                } else if (!movie) {
+                    res.status(404).json({
+                        status: 404,
+                        message: 'Movie not found'
+                    });
+                } else {
+                    res.status(200).json({
+                        status: 200,
+                        message: 'GET movie by id',
+                        headers: req.headers,
+                        query: req.query,
+                        env: process.env.DB,
+                        data: movie,
+                    });
+                }
+            });
+        }
+    });
+
 router.route('/reviews')
     .get(authJwtController.isAuthenticated,(req, res) => {
         Review.find({}, (err, reviews) => {
