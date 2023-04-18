@@ -159,26 +159,12 @@ router.route('/movies')
             res.status(400).json({success: false, msg: 'Please include title, releaseDate, genre, and three actors in request body.'})
         } else {
             // Create a new movie object with the provided fields
-            const newMovie = new Movie({
-                title: req.body.title,
-                releaseDate: req.body.releaseDate,
-                genre: req.body.genre,
-                actors: [
-                    {
-                        actorName: req.body.actors[0].actorName,
-                        characterName: req.body.actors[0].characterName,
-                    },
-                    {
-                        actorName: req.body.actors[1].actorName,
-                        characterName: req.body.actors[1].characterName,
-                    },
-                    {
-                        actorName: req.body.actors[2].actorName,
-                        characterName: req.body.actors[2].characterName,
-                    },
-                ],
-                imageURL: req.body.imageURL
-            });
+            var movie = new Movie();
+                movie.title = req.body.title;
+                movie.releaseDate = req.body.releaseDate;
+                movie.genre = req.body.genre;
+                movie.imageUrl = req.body.imageUrl;
+                movie.actors = req.body.actors;
     
             // Save the new movie to the database
             newMovie.save((err, savedMovie) => {
