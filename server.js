@@ -177,6 +177,7 @@ router.route('/movies')
                         characterName: req.body.actors[2].characterName,
                     },
                 ],
+                imageURL: req.body.imageURL
             });
     
             // Save the new movie to the database
