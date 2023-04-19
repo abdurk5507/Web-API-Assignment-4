@@ -121,7 +121,7 @@ router.route('/movies')
                         message: 'Error retrieving movies with reviews from database'
                     });
                 } else {
-                    /*
+                    
                     res.status(200).json({
                         status: 200,
                         message: 'GET movies with reviews',
@@ -130,8 +130,8 @@ router.route('/movies')
                         env: process.env.DB,
                         data: movies,
                     });
-                    */
-                   res.json({movies});
+                    
+                   //res.json({movies});
                 }
             });
         } else {//Do what we did in HW3
