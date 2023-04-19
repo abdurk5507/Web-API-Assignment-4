@@ -10,7 +10,7 @@ var MovieSchema = new Schema({
     required: true,
     index: true
   },
-  releaseDate: Date,
+  releaseDate: String,
   genre: {
     type: String,
     enum: ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Thriller', 'Western', 'Science Fiction']
