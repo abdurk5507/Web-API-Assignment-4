@@ -28,7 +28,7 @@ var MovieSchema = new Schema({
     }],
     validate: [actorsLimit, '{PATH} exceeds the limit of 3']
   },
-  imageURL: {
+  imageUrl: {
     type: String, 
     required: false
   }
