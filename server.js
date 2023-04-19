@@ -187,7 +187,7 @@ router.route('/movies')
                 releaseDate: req.body.releaseDate,
                 genre: req.body.genre,
                 actors: req.body.actors,
-                imageURL: req.body.imageURL
+                imageUrl: req.body.imageUrl
             });
 
             // Save the new movie to the database
