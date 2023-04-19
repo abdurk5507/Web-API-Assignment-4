@@ -155,17 +155,41 @@ router.route('/movies')
 
     .post(authJwtController.isAuthenticated, (req, res) => {
         // Check if all required fields are present in the request body
-        if (!req.body.title || !req.body.releaseDate || !req.body.genre || !req.body.actors || req.body.actors.length !== 3) {
+        //if (!req.body.title || !req.body.releaseDate || !req.body.genre || !req.body.actors || req.body.actors.length !== 3) {
+        if (!req.body.title || !req.body.releaseDate || !req.body.genre || !req.body.actors) {
             res.status(400).json({success: false, msg: 'Please include title, releaseDate, genre, and three actors in request body.'})
         } else {
             // Create a new movie object with the provided fields
-            var movie = new Movie();
-                movie.title = req.body.title;
-                movie.releaseDate = req.body.releaseDate;
-                movie.genre = req.body.genre;
-                movie.imageUrl = req.body.imageUrl;
-                movie.actors = req.body.actors;
-    
+            /*
+            const newMovie = new Movie({
+                title: req.body.title,
+                releaseDate: req.body.releaseDate,
+                genre: req.body.genre,
+                actors: [
+                    {
+                        actorName: req.body.actors[0].actorName,
+                        characterName: req.body.actors[0].characterName,
+                    },
+                    {
+                        actorName: req.body.actors[1].actorName,
+                        characterName: req.body.actors[1].characterName,
+                    },
+                    {
+                        actorName: req.body.actors[2].actorName,
+                        characterName: req.body.actors[2].characterName,
+                    },
+                ],
+                imageURL: req.body.imageURL
+            });
+            */
+            let newMovie = new Movie({
+                title: req.body.title,
+                releaseDate: req.body.releaseDate,
+                genre: req.body.genre,
+                actors: req.body.actors,
+                imageURL: req.body.imageURL
+            });
+
             // Save the new movie to the database
             newMovie.save((err, savedMovie) => {
                 if (err) {
